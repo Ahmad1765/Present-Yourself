@@ -45,6 +45,8 @@ def _extract_palette(prs: Presentation) -> dict[str, str]:
         "accent3": "#F59E0B",
         "muted": "#64748B",
     }
+    if not prs.slide_masters or len(prs.slide_masters) == 0:
+        return palette
     try:
         theme_xml = prs.slide_masters[0].element.xpath(
             ".//a:clrScheme",
@@ -76,6 +78,11 @@ def _extract_palette(prs: Presentation) -> dict[str, str]:
 def _extract_fonts(prs: Presentation) -> dict[str, dict[str, Any]]:
     heading = "Inter"
     body = "Inter"
+    if not prs.slide_masters or len(prs.slide_masters) == 0:
+        return {
+            "heading": {"family": heading, "weight": 700},
+            "body": {"family": body, "weight": 400},
+        }
     try:
         ns = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
         font_scheme = prs.slide_masters[0].element.xpath(".//a:fontScheme", namespaces=ns)

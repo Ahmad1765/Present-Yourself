@@ -68,7 +68,7 @@ function devHeader(): Record<string, string> {
   return { "X-Dev-User-Id": uid };
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function rawFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const r = await fetch(`${BASE}/v1${path}`, {
     ...init,
     headers: {
@@ -83,8 +83,16 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     try { body = await r.json(); } catch { /* ignore */ }
     throw new ApiError(r.status, r.statusText, body);
   }
-  if (r.status === 204) return undefined as T;
+  return r;
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const r = await rawFetch(path, init);
   return (await r.json()) as T;
+}
+
+async function requestVoid(path: string, init: RequestInit = {}): Promise<void> {
+  await rawFetch(path, init);
 }
 
 export class ApiError extends Error {
@@ -103,7 +111,7 @@ export const api = {
   listKeys: () => request<ApiKey[]>(`/api-keys`),
   upsertKey: (provider: Provider, key: string) =>
     request<ApiKey>(`/api-keys`, { method: "POST", body: JSON.stringify({ provider, key }) }),
-  deleteKey: (provider: Provider) => request<void>(`/api-keys/${provider}`, { method: "DELETE" }),
+  deleteKey: (provider: Provider) => requestVoid(`/api-keys/${provider}`, { method: "DELETE" }),
 
   listProjects: (q?: string) =>
     request<Project[]>(`/projects${q ? `?q=${encodeURIComponent(q)}` : ""}`),
@@ -113,7 +121,7 @@ export const api = {
   duplicateProject: (id: string) =>
     request<Project>(`/projects/${id}/duplicate`, { method: "POST" }),
   deleteProject: (id: string) =>
-    request<void>(`/projects/${id}`, { method: "DELETE" }),
+    requestVoid(`/projects/${id}`, { method: "DELETE" }),
 
   generateDeck: (projectId: string, settings: GenerationSettings) =>
     request<Deck>(`/projects/${projectId}/decks`, {

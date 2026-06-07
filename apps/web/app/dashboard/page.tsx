@@ -75,13 +75,23 @@ function EmptyState() {
 
 function ProjectCard({ project, onChange }: { project: Project; onChange: () => void }) {
   async function duplicate() {
-    await api.duplicateProject(project.id);
-    onChange();
+    try {
+      await api.duplicateProject(project.id);
+      onChange();
+    } catch (e) {
+      console.error("Duplicate failed:", e);
+      alert(`Couldn't duplicate "${project.title}". Please try again.`);
+    }
   }
   async function remove() {
     if (!confirm(`Delete "${project.title}"?`)) return;
-    await api.deleteProject(project.id);
-    onChange();
+    try {
+      await api.deleteProject(project.id);
+      onChange();
+    } catch (e) {
+      console.error("Delete failed:", e);
+      alert(`Couldn't delete "${project.title}". Please try again.`);
+    }
   }
   return (
     <div className="card overflow-hidden group">

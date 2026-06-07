@@ -21,6 +21,7 @@ celery_app = Celery(
 
 celery_app.conf.update(
     task_default_queue="generate",
+    task_queues=("generate", "export", "render"),
     task_routes={
         "app.tasks.generate.*": {"queue": "generate"},
         "app.tasks.export_pptx.*": {"queue": "export"},

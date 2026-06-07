@@ -6,6 +6,12 @@ import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { api } from "@/lib/api";
 
+type ModelProvider = "openai" | "anthropic" | "gemini";
+const MODEL_PROVIDERS: ReadonlyArray<ModelProvider> = ["openai", "anthropic", "gemini"];
+function isModelProvider(v: string): v is ModelProvider {
+  return (MODEL_PROVIDERS as ReadonlyArray<string>).includes(v);
+}
+
 export default function NewProjectWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -14,7 +20,7 @@ export default function NewProjectWizard() {
   const [brief, setBrief] = useState("");
   const [slideCount, setSlideCount] = useState(10);
   const [withImages, setWithImages] = useState(true);
-  const [modelProvider, setModelProvider] = useState<"openai" | "anthropic" | "gemini">("openai");
+  const [modelProvider, setModelProvider] = useState<ModelProvider>("openai");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,7 +102,13 @@ export default function NewProjectWizard() {
             </label>
 
             <label className="label mt-6 block">AI model</label>
-            <select className="input mt-2" value={modelProvider} onChange={(e) => setModelProvider(e.target.value as never)}>
+            <select
+              className="input mt-2"
+              value={modelProvider}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                if (isModelProvider(e.target.value)) setModelProvider(e.target.value);
+              }}
+            >
               <option value="openai">OpenAI</option>
               <option value="anthropic">Anthropic Claude</option>
               <option value="gemini">Google Gemini</option>

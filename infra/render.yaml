@@ -69,7 +69,7 @@ services:
     plan: standard
     rootDir: apps/api
     buildCommand: pip install -e .
-    startCommand: celery -A app.tasks.celery_app worker -l info -Q research,generate,render,export --concurrency 4
+    startCommand: celery -A app.tasks.celery_app worker -l info -Q generate,render,export --concurrency 4
     autoDeploy: true
     envVars:
       - fromGroup: present-yourself-shared
@@ -100,11 +100,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
+      # Render's `fromService.property: host` returns hostname only (no scheme).
+      # Set this to the full `https://...` API URL of the deployed API service.
+      # Leaving sync:false so the operator must paste the absolute URL in the
+      # Render dashboard after first deploy (e.g. https://present-yourself-api.onrender.com).
       - key: NEXT_PUBLIC_API_BASE_URL
-        fromService:
-          type: web
-          name: present-yourself-api
-          property: host
+        sync: false
       - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
         sync: false
       - key: CLERK_SECRET_KEY

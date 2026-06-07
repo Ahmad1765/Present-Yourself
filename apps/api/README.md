@@ -22,7 +22,7 @@ uvicorn app.main:app --reload --port 8000
 In another shell:
 
 ```bash
-celery -A app.tasks.celery_app worker -l info -Q research,generate,render,export
+celery -A app.tasks.celery_app worker -l info -Q generate,render,export
 ```
 
 ## Dev auth bypass

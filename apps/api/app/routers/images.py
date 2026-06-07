@@ -41,8 +41,14 @@ async def image_search(
         if isinstance(batch, Exception):
             continue
         for item in batch:
-            if item["url"] in seen:
+            url = item.get("url") if isinstance(item, dict) else None
+            if not url or not isinstance(url, str):
                 continue
-            seen.add(item["url"])
-            merged.append(ImageSearchResult(**item))
+            if url in seen:
+                continue
+            seen.add(url)
+            try:
+                merged.append(ImageSearchResult(**item))
+            except (TypeError, ValueError):
+                continue
     return ImageSearchOut(results=merged, next_page=page + 1 if merged else None)

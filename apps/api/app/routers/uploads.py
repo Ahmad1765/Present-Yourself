@@ -29,7 +29,17 @@ async def sign_upload(
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "File too large")
 
     storage = get_storage()
-    ext = "pptx" if payload.purpose == "template" else payload.content_type.split("/")[-1]
+    if payload.purpose == "template":
+        ext = "pptx"
+    else:
+        # Derive image extension from validated content_type (already in _ALLOWED_TYPES)
+        if not isinstance(payload.content_type, str) or "/" not in payload.content_type:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid content_type")
+        subtype = payload.content_type.split("/", 1)[1].strip().lower()
+        ext_map = {"jpeg": "jpg", "png": "png", "webp": "webp"}
+        if subtype not in ext_map:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unsupported image content_type")
+        ext = ext_map[subtype]
     prefix = f"{payload.purpose}s/{user.id}"
     key = storage.new_key(prefix, ext)
     url = storage.presign_put(key, payload.content_type, expires=900)

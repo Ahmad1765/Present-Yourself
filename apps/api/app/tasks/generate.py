@@ -126,8 +126,8 @@ async def _regenerate_slide_async(deck_id: str, user_id: str, slide_index: int, 
         if deck is None or not deck.blueprint:
             return {"ok": False, "error": "deck not ready"}
         existing = SlideBlueprint.model_validate(deck.blueprint)
+        provider = (deck.generation_meta or {}).get("provider", "openai")
 
-    provider = (deck.generation_meta or {}).get("provider", "openai")
     key = await _resolve_key_async(user_id, provider)
     llm = get_llm_adapter(provider, key)
     # naive approach: ask for a full deck of size 1 keyed to the same topic + hint
@@ -214,6 +214,7 @@ async def _resolve_key_async(user_id: str, provider: str) -> str:
         "unsplash": settings.system_unsplash_key,
         "pexels": settings.system_pexels_key,
         "pixabay": settings.system_pixabay_key,
+        "stability": settings.system_stability_key,
     }
     val = fallbacks.get(provider, "")
     if val:

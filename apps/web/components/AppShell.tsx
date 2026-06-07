@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 export function AppShell({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   const [devUserId, setDevUserId] = useState("");
 
   useEffect(() => {
+    if (!IS_DEV) return;
     const id = window.localStorage.getItem("dev_user_id") ?? "dev-local";
     setDevUserId(id);
   }, []);
@@ -30,13 +33,15 @@ export function AppShell({ children, action }: { children: React.ReactNode; acti
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <input
-              aria-label="Dev user id"
-              className="input max-w-[12rem] text-xs"
-              placeholder="dev user id"
-              value={devUserId}
-              onChange={(e) => setUid(e.target.value)}
-            />
+            {IS_DEV && (
+              <input
+                aria-label="Dev user id"
+                className="input max-w-[12rem] text-xs"
+                placeholder="dev user id"
+                value={devUserId}
+                onChange={(e) => setUid(e.target.value)}
+              />
+            )}
             {action}
           </div>
         </div>

@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
@@ -11,7 +13,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.pexels.com" },
       { protocol: "https", hostname: "pixabay.com" },
       { protocol: "https", hostname: "**.r2.cloudflarestorage.com" },
-      { protocol: "http", hostname: "localhost" },
+      ...(isDev ? [{ protocol: "http" as const, hostname: "localhost" }] : []),
     ],
   },
 };

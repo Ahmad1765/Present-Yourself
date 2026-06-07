@@ -37,8 +37,13 @@ export default function ApiKeysPage() {
 
   async function remove(p: Provider) {
     if (!confirm(`Remove ${p} key?`)) return;
-    await api.deleteKey(p);
-    await refresh();
+    try {
+      await api.deleteKey(p);
+      await refresh();
+    } catch (e) {
+      console.error("Delete key failed:", e);
+      setError(String(e));
+    }
   }
 
   const byProvider = Object.fromEntries(keys.map((k) => [k.provider, k]));

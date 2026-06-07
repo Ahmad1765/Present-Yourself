@@ -43,6 +43,9 @@ class AppUser(Base, TimestampMixin):
     projects: Mapped[list[Project]] = relationship(back_populates="user", cascade="all, delete-orphan")
     templates: Mapped[list[Template]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
+    def __repr__(self) -> str:
+        return f"AppUser(id={self.id!r}, clerk_user_id={self.clerk_user_id!r}, email='[REDACTED]')"
+
 
 class UserApiKey(Base, TimestampMixin):
     __tablename__ = "user_api_key"
@@ -111,7 +114,9 @@ class Deck(Base, TimestampMixin):
 
     project: Mapped[Project] = relationship(back_populates="decks")
     versions: Mapped[list[DeckVersion]] = relationship(
-        back_populates="deck", cascade="all, delete-orphan", order_by="DeckVersion.created_at.desc()"
+        back_populates="deck",
+        cascade="all, delete-orphan",
+        order_by=lambda: DeckVersion.created_at.desc(),
     )
 
 

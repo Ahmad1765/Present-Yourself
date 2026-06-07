@@ -53,11 +53,15 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    # NOTE: Bucket is private. The API issues presigned GET URLs for downloads
+    # via storage.presign_get(), so anonymous access is NOT required.
+    # If you need anonymous download for ad-hoc local testing, set
+    # ENABLE_ANONYMOUS_EXPORTS=1 and adjust the entrypoint manually —
+    # never enable in production or with sensitive data.
     entrypoint: >
       /bin/sh -c "
       mc alias set local http://minio:9000 minio minio12345 &&
-      mc mb -p local/present-yourself || true &&
-      mc anonymous set download local/present-yourself/exports || true
+      mc mb -p local/present-yourself || true
       "
 
 volumes:

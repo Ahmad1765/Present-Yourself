@@ -35,6 +35,10 @@ def export_pptx_task(self, artifact_id: str) -> dict:
 
     with db_session() as db:
         artifact = db.get(ExportArtifact, uuid.UUID(artifact_id))
+        if artifact is None:
+            # Artifact row was deleted between sessions (race or cleanup); object is uploaded
+            # but no DB row to update. Return failure so the caller can retry/repair.
+            return {"ok": False, "error": "artifact deleted during export", "uploaded_key": key}
         artifact.storage_url = f"s3://{storage.bucket}/{key}"
         artifact.size_bytes = len(pptx_bytes)
         artifact.expires_at = datetime.now(timezone.utc) + timedelta(days=30)

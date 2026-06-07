@@ -46,8 +46,11 @@ async def _fetch_jwks(url: str) -> dict:
 
 async def _verify_clerk_token(token: str) -> tuple[str, str]:
     settings = get_settings()
-    if not settings.clerk_jwks_url:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Clerk not configured")
+    if not settings.clerk_jwks_url or not settings.clerk_audience:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            "Clerk not configured (CLERK_JWKS_URL and CLERK_AUDIENCE required)",
+        )
     jwks = await _fetch_jwks(settings.clerk_jwks_url)
     unverified = jwt.get_unverified_header(token)
     key = next((k for k in jwks["keys"] if k["kid"] == unverified["kid"]), None)
@@ -55,7 +58,12 @@ async def _verify_clerk_token(token: str) -> tuple[str, str]:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Unknown signing key")
     public_key = jwt.algorithms.RSAAlgorithm.from_jwk(key)
     try:
-        claims = jwt.decode(token, public_key, algorithms=["RS256"], options={"verify_aud": False})
+        claims = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=settings.clerk_audience,
+        )
     except jwt.PyJWTError as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(e)) from e
     return claims["sub"], claims.get("email", "")

@@ -22,7 +22,9 @@ async def list_projects(
 ) -> list[ProjectOut]:
     stmt = select(Project).where(Project.user_id == uuid.UUID(user.id))
     if q:
-        stmt = stmt.where(Project.title.ilike(f"%{q}%"))
+        # Escape LIKE metacharacters so user input cannot use wildcards
+        escaped = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        stmt = stmt.where(Project.title.ilike(f"%{escaped}%", escape="\\"))
     stmt = stmt.order_by(Project.updated_at.desc()).offset((page - 1) * limit).limit(limit)
     res = await db.execute(stmt)
     return [ProjectOut.model_validate(p) for p in res.scalars().all()]

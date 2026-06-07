@@ -24,8 +24,10 @@ export default function EditorPage() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const blueprint = useMemo(() => {
-    if (!deck || !deck.blueprint || !("schema_version" in (deck.blueprint as object))) return null;
-    const parsed = SlideBlueprint.safeParse(deck.blueprint);
+    if (!deck) return null;
+    const bp = deck.blueprint;
+    if (typeof bp !== "object" || bp === null || !("schema_version" in bp)) return null;
+    const parsed = SlideBlueprint.safeParse(bp);
     return parsed.success ? parsed.data : null;
   }, [deck]);
 
@@ -67,17 +69,21 @@ export default function EditorPage() {
   }, [blueprint, deckId]);
 
   async function handleExport() {
-    const job = await api.exportDeck(deckId);
-    // poll briefly
-    for (let i = 0; i < 30; i++) {
-      const out = await api.getExport(job.id);
-      if (out.storage_url) {
-        window.open(out.storage_url, "_blank", "noopener");
-        return;
+    try {
+      const job = await api.exportDeck(deckId);
+      for (let i = 0; i < 30; i++) {
+        const out = await api.getExport(job.id);
+        if (out.storage_url) {
+          window.open(out.storage_url, "_blank", "noopener");
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 1000));
       }
-      await new Promise((r) => setTimeout(r, 1000));
+      alert("Export taking too long — check Exports tab.");
+    } catch (e) {
+      console.error("Export failed:", e);
+      alert("Export failed — please try again.");
     }
-    alert("Export taking too long — check Exports tab.");
   }
 
   if (stage !== "ready" && (!deck || !blueprint)) {
@@ -97,8 +103,8 @@ export default function EditorPage() {
           <input
             className="font-medium bg-transparent border-0 focus:outline-none w-80"
             value={blueprint.deck.title}
-            onChange={(e) => handleEdit(slides.map((s, i) => i === 0 ? s : s))}
             readOnly
+            aria-label="Deck title"
           />
           <span className="text-xs text-[var(--color-fg-muted)]">
             {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved" : ""}

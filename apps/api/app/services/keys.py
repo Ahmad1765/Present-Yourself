@@ -26,6 +26,7 @@ _SYSTEM_FALLBACKS = {
     "unsplash":  lambda s: s.system_unsplash_key,
     "pexels":    lambda s: s.system_pexels_key,
     "pixabay":   lambda s: s.system_pixabay_key,
+    "stability": lambda s: s.system_stability_key,
 }
 
 

@@ -1,0 +1,111 @@
+databases:
+  - name: present-yourself-db
+    plan: starter
+    postgresMajorVersion: 16
+
+services:
+  - type: redis
+    name: present-yourself-redis
+    plan: starter
+    ipAllowList: []
+
+  - type: web
+    name: present-yourself-api
+    runtime: python
+    plan: standard
+    rootDir: apps/api
+    buildCommand: pip install -e . && alembic upgrade head
+    startCommand: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:$PORT --timeout 120
+    healthCheckPath: /v1/healthz
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: present-yourself-db
+          property: connectionString
+      - key: SYNC_DATABASE_URL
+        fromDatabase:
+          name: present-yourself-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: present-yourself-redis
+          property: connectionString
+      - key: MASTER_ENCRYPTION_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_JWKS_URL
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: SYSTEM_OPENAI_KEY
+        sync: false
+      - key: SYSTEM_TAVILY_KEY
+        sync: false
+      - key: SYSTEM_UNSPLASH_KEY
+        sync: false
+      - key: SYSTEM_PEXELS_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+
+  - type: worker
+    name: present-yourself-worker
+    runtime: python
+    plan: standard
+    rootDir: apps/api
+    buildCommand: pip install -e .
+    startCommand: celery -A app.tasks.celery_app worker -l info -Q research,generate,render,export --concurrency 4
+    autoDeploy: true
+    envVars:
+      - fromGroup: present-yourself-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: present-yourself-db
+          property: connectionString
+      - key: SYNC_DATABASE_URL
+        fromDatabase:
+          name: present-yourself-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: present-yourself-redis
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: "3.13.1"
+
+  - type: web
+    name: present-yourself-web
+    runtime: node
+    plan: standard
+    rootDir: apps/web
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NEXT_PUBLIC_API_BASE_URL
+        fromService:
+          type: web
+          name: present-yourself-api
+          property: host
+      - key: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false

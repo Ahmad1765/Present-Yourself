@@ -1,0 +1,19 @@
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  experimental: {
+    typedRoutes: true,
+  },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "pixabay.com" },
+      { protocol: "https", hostname: "**.r2.cloudflarestorage.com" },
+      { protocol: "http", hostname: "localhost" },
+    ],
+  },
+};
+
+export default nextConfig;
